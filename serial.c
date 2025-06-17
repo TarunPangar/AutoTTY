@@ -8,6 +8,7 @@
 
 #include "serial.h"
 #include "state_machine.h"
+#include "common.h"
 
 #define BUF_SIZE		2
 #define MAX_ACCUM_BUF	1024
@@ -57,6 +58,7 @@ void *read_serial_loop(void *arg)
 {
 	char buf[BUF_SIZE];
 	int ret;
+	int uboot_cnt = 0;
 
     while(1) {
 
@@ -86,8 +88,9 @@ void *read_serial_loop(void *arg)
                 printf("Detected linux login prompt! Sending key to login...\n");
                 write(tty_fd, "root\n", 5);		// Send Enter key to interrupt autoboot
                 accum_len = 0;
-            } else if (strstr(accum_buf, "=>")) {
+            } else if (strstr(accum_buf, "=>") && uboot_cnt < 1) {
                 printf("Detected U-Boot prompt!\n");
+				uboot_cnt++;
                 current_state = STATE_UBOOT;
                 pthread_cond_signal(&state_cond);
             } else if (strstr(accum_buf, "root@j722s-evm:")) {	// || strstr(accum_buf, "# ")) {
@@ -111,21 +114,28 @@ void *write_serial_loop(void *args)
 
 		if (!running) {
 			pthread_mutex_unlock(&state_lock);
+			break;
 		}
 
-		if (current_state == STATE_UBOOT) {
-			printf("[writer] Sending u-boot commands...\n");
-			write(tty_fd, "sf probe\n", 9);
-			sleep(1);
-			write(tty_fd, "boot\n", 5);
-			current_state = STATE_WAIT;
-		} else if(current_state == STATE_LINUX) {
-			printf("[writer] Sending linux commands...\n");
-			write(tty_fd, "./run_script.sh\n", 17);
-			current_state = STATE_WAIT;
-		}
+		BootState state = current_state;
+		current_state = STATE_WAIT;
 		pthread_mutex_unlock(&state_lock);
-		sleep(1);
-    }
+
+		if (state == STATE_UBOOT) {
+			printf("[writer] Sending u-boot commands...\n");
+			for(int i = 0; i < uboot_cmds.count && running; i++) {
+				dprintf(tty_fd, "%s\n", uboot_cmds.command[i]);
+				printf("[U-Boot] Sent: %s\n", uboot_cmds.command[i]);
+				sleep(1);
+			}
+		} else if(state == STATE_LINUX) {
+			printf("[writer] Sending linux commands...\n");
+			for(int i = 0; i < linux_cmds.count && running; i++) {
+				dprintf(tty_fd, "%s\n", linux_cmds.command[i]);
+				printf("[linux] Sent: %s\n", linux_cmds.command[i]);
+				sleep(1);
+            }
+		}
+	}
 	return NULL;
 }

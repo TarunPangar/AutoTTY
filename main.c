@@ -9,11 +9,13 @@
 
 #include "serial.h"
 #include "state_machine.h"
+#include "parser.h"
 
 #define TTY_PATH "/dev/ttyUSB2"
 #define LOG_FILE "log_file.txt"
+#define CFG_FILE "commands.cfg"
 
-int tty_fd, log_fd;
+int tty_fd, log_fd, cfg_fd;
 volatile bool running = true;
 
 pthread_mutex_t state_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -30,6 +32,7 @@ void handle_sigint(int signal)
 
 	close(tty_fd);
 	close(log_fd);
+	close(cfg_fd);
 	printf("Shutting down gracefully....\n");
 }
 
@@ -54,6 +57,14 @@ int main()
 	if (init_serial(tty_fd) < 0) {
 		return 1;
 	}
+
+	cfg_fd = open(CFG_FILE, O_RDWR);
+	if (cfg_fd < 0) {
+        perror("open cfg");
+        return 1;
+    }
+
+	parse_cfg(cfg_fd);
 
 	pthread_t reader, writer;
 	pthread_create(&reader, NULL, read_serial_loop, NULL);
