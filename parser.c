@@ -84,6 +84,7 @@ int parse_cfg(int fd)
 		}
 	}
 
+#if (ENABLE_STDOUT_PRINTS == 1U)
 	printf("U-Boot Commands:\n");
 	printf("u-boot count  %d\n", uboot_cmds.count);
 	for (int i = 0; i < uboot_cmds.count; i++) {
@@ -95,6 +96,7 @@ int parse_cfg(int fd)
 	for (int i = 0; i < linux_cmds.count; i++) {
 		printf("  %s\n", linux_cmds.command[i]);
 	}
+#endif
 
 	return 0;
 }

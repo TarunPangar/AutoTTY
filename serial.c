@@ -7,7 +7,6 @@
 #include <stdbool.h>
 
 #include "serial.h"
-#include "state_machine.h"
 #include "common.h"
 
 #define BUF_SIZE		2
@@ -25,7 +24,9 @@ int init_serial(int fd)
 	struct termios tty;
 
 	if (tcgetattr(fd, &tty) < 0) {
+#if (ENABLE_STDOUT_PRINTS == 1U)
 		perror("tcgetattr");
+#endif
 		return -1;
 	}
 
@@ -47,7 +48,9 @@ int init_serial(int fd)
 	tty.c_cc[VTIME] = 1;
 
 	if (tcsetattr(fd, TCSANOW, &tty) != 0) {
+#if (ENABLE_STDOUT_PRINTS == 1U)
 		perror("tcsetattr");
+#endif
 		return -1;
 	}
 
@@ -81,20 +84,28 @@ void *read_serial_loop(void *arg)
 			// Detect boot stages
 			pthread_mutex_lock(&state_lock);
 			if (strstr(accum_buf, "Hit any key to stop autoboot:")) {
+#if (ENABLE_STDOUT_PRINTS == 1U)
                 printf("Detected autoboot prompt! Sending key to interrupt...\n");
+#endif
                 write(tty_fd, "\n", 1);		// Send Enter key to interrupt autoboot
                 accum_len = 0;
 			} else if (strstr(accum_buf, "j722s-evm login:")) {
+#if (ENABLE_STDOUT_PRINTS == 1U)
                 printf("Detected linux login prompt! Sending key to login...\n");
+#endif
                 write(tty_fd, "root\n", 5);		// Send Enter key to interrupt autoboot
                 accum_len = 0;
             } else if (strstr(accum_buf, "=>") && uboot_cnt < 1) {
+#if (ENABLE_STDOUT_PRINTS == 1U)
                 printf("Detected U-Boot prompt!\n");
+#endif
 				uboot_cnt++;
                 current_state = STATE_UBOOT;
                 pthread_cond_signal(&state_cond);
             } else if (strstr(accum_buf, "root@j722s-evm:")) {	// || strstr(accum_buf, "# ")) {
+#if (ENABLE_STDOUT_PRINTS == 1U)
                 printf("Detected Linux shell prompt!\n");
+#endif
                 current_state = STATE_LINUX;
                 pthread_cond_signal(&state_cond);
             }
@@ -122,17 +133,25 @@ void *write_serial_loop(void *args)
 		pthread_mutex_unlock(&state_lock);
 
 		if (state == STATE_UBOOT) {
+#if (ENABLE_STDOUT_PRINTS == 1U)
 			printf("[writer] Sending u-boot commands...\n");
+#endif
 			for(int i = 0; i < uboot_cmds.count && running; i++) {
 				dprintf(tty_fd, "%s\n", uboot_cmds.command[i]);
+#if (ENABLE_STDOUT_PRINTS == 1U)
 				printf("[U-Boot] Sent: %s\n", uboot_cmds.command[i]);
+#endif
 				sleep(1);
 			}
 		} else if(state == STATE_LINUX) {
+#if (ENABLE_STDOUT_PRINTS == 1U)
 			printf("[writer] Sending linux commands...\n");
+#endif
 			for(int i = 0; i < linux_cmds.count && running; i++) {
 				dprintf(tty_fd, "%s\n", linux_cmds.command[i]);
+#if (ENABLE_STDOUT_PRINTS == 1U)
 				printf("[linux] Sent: %s\n", linux_cmds.command[i]);
+#endif
 				sleep(1);
             }
 		}
