@@ -9,7 +9,6 @@
 #include "serial.h"
 #include "common.h"
 
-#define BUF_SIZE		2
 #define MAX_ACCUM_BUF	1024
 
 extern int tty_fd;
@@ -59,21 +58,25 @@ int init_serial(int fd)
 
 void *read_serial_loop(void *arg)
 {
-	char buf[BUF_SIZE];
+	char ch;
 	int ret;
 	int uboot_cnt = 0;
+	char prev_char = 0;
 
     while(1) {
 
-        ret = read(tty_fd, buf, BUF_SIZE - 1);
+        ret = read(tty_fd, &ch, 1);
         if (ret > 0) {
-            buf[ret] = '\0';
-            ret = write(log_fd, buf, ret);
-            printf("%s", buf);
+			if (prev_char == '\n' && ch == '\n') {
+				continue;
+			}
+			prev_char = ch;
+            ret = write(log_fd, &ch, ret);
+            printf("%c", ch);
 
 			// Accumulate for pattern detection
             if (accum_len + ret < MAX_ACCUM_BUF - 1) {
-                memcpy(&accum_buf[accum_len], buf, ret);
+				accum_buf[accum_len] = ch;
                 accum_len += ret;
                 accum_buf[accum_len] = '\0';
             } else {
