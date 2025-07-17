@@ -27,6 +27,7 @@ make
 ```
 
 ## Project Structure
+```
 AutoTTY/
 ├── main.c            # Main execution loop, handles file open, serial device open, thread initializtion.
 ├── serial.c/h        # Low-level serial communication functions
@@ -35,12 +36,13 @@ AutoTTY/
 ├── commands.cfg      # Config file with boot and shell commands
 ├── Makefile          # Build automation script
 ├── README.md         # Documentation (this file)
-└── LICENSE           # License information (add file if not included)
+└── LICENSE           # License information
+```
 
 ## Usage
 ### Running the Application
-#### 1. Prepare commands.cfg file
-This file should include all serial commands (e.g., bootloader commands, Linux shell commands), each on a new line. Below is a sample structure:
+#### 1. Prepare `commands.cfg` file
+`commands.cfg` file should include all serial commands (e.g., bootloader commands, Linux shell commands), each on a new line. Below is a sample structure:
 ```bash
 [u-boot]
 > sf probe
@@ -56,7 +58,7 @@ This file should include all serial commands (e.g., bootloader commands, Linux s
 - The [linux] section is for Linux shell commands.
 
 #### 2. Configure the serial terminal and debug print statements
-In common.h, 
+In `common.h`, 
 - Edit TTY_PATH with the appropriate TTY device name.
 - Enable ENABLE_STDOUT_PRINTS if debug print statements are required to print on stdout.
 For example,
@@ -69,8 +71,7 @@ For example,
 ```bash
 ./autotty
 ```
-
-This will print all the messages coming from serial device to a file "log_file.txt".
+This will print all the messages coming from serial device to a file `log_file.txt`.
 
 ### Clean
 To remove compiled files and reset the environment:
