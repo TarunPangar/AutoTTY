@@ -10,10 +10,6 @@
 #include "parser.h"
 #include "common.h"
 
-#define TTY_PATH "/dev/ttyUSB2"
-#define LOG_FILE "log_file.txt"
-#define CFG_FILE "commands.cfg"
-
 int tty_fd, log_fd, cfg_fd;
 volatile bool running = true;
 volatile sig_atomic_t signal_count = 0;

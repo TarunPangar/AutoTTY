@@ -4,10 +4,13 @@
 #include <pthread.h>
 #include <sys/types.h>
 
-#define MAX_CMDS 50
-#define MAX_CMD_LEN 128
+#define MAX_CMDS                50
+#define MAX_CMD_LEN             128
 
-#define ENABLE_STDOUT_PRINTS	(0U)
+#define TTY_PATH                "/dev/ttyUSB2"
+#define LOG_FILE                "log_file.txt"
+#define CFG_FILE                "commands.cfg"
+#define ENABLE_STDOUT_PRINTS	(1U)
 
 typedef struct {
     char command[MAX_CMDS][MAX_CMD_LEN];
